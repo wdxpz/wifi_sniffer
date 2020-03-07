@@ -4,7 +4,7 @@ import time
 import re
 import requests
 import threading
-from Queue import Queue
+from queue import Queue
 from datetime import timedelta
 
 import kismet_rest as KismetRest
@@ -55,9 +55,8 @@ tl = Timeloop()
 #collect devices from kismet very config.collect_time_interval seconds 
 @tl.job(interval=timedelta(seconds=config.collect_time_interval))
 def collect_kismet():
-    dlist = kr.smart_device_list(ts=time.time()-collect_time_interval)
-    print('\n\nstart to collect devices...!')
-    print('found original device records: {}'.format(len(dlist)))
+    dlist = kr.smart_device_list(ts=time.time()-config.collect_time_interval)
+    #print('found original device records: {}'.format(len(dlist)))
 
     temp_cache = []
     for d in dlist:
@@ -70,19 +69,21 @@ def collect_kismet():
             'time': d['kismet.device.base.last_time']
             }
         )
-        #print('found new device {}'.format(drecords[d['kismet.device.base.macaddr']]))
-    print('generate  device records: {}'.format(len(drecords)))
+        print('found new device {}'.format(temp_cache[len(temp_cache)-1]))
+    print('generate  device records: {}'.format(len(temp_cache)))
     upload_cache.put(temp_cache)
 
 #upload to data center
-@tl.job(interval=timedelta(seconds=config.upload__time_interval))
-def upload():
+@tl.job(interval=timedelta(seconds=config.upload_time_interval))
+def upload2datacenter():
     records = []
     while not upload_cache.empty():
         records += upload_cache.get()
         upload_cache.task_done()
 
     print('consume device records: {}'.format(len(records)))
+    if len(records) == 0:
+        return
     t = threading.Thread(target=upload, args=(records,))
     t.start()
 
