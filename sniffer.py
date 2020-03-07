@@ -4,6 +4,7 @@ import time
 import re
 import requests
 import threading
+from Queue import Queue
 from datetime import timedelta
 
 import kismet_rest as KismetRest
@@ -33,13 +34,17 @@ def per_device(d):
             d['kismet.device.base.last_time'],
             time.time() - d['kismet.device.base.last_time']))
 
+
+upload_cache = Queue(maxsize=0)
+write_cach_sigal = singal = threading.Event()
+
 kr = KismetRest.KismetConnector(config.uri, username=config.user, password=config.password)
 
 #wait for kismet service
 while True:
     try:
         status = kr.system_status()
-        print('found Kismet online!)
+        print('found Kismet online!')
         break;
     except e:
         print('waiting Kismet online ....', end='\r')
@@ -47,41 +52,48 @@ while True:
 
 tl = Timeloop()
 
-@tl.job(interval=timedelta(seconds=config.report_time_interval))
-def sniffer_kismet()
-    dlist = kr.smart_device_list(ts=1)
+#collect devices from kismet very config.collect_time_interval seconds 
+@tl.job(interval=timedelta(seconds=config.collect_time_interval))
+def collect_kismet():
+    dlist = kr.smart_device_list(ts=time.time()-collect_time_interval)
+    print('\n\nstart to collect devices...!')
+    print('found original device records: {}'.format(len(dlist)))
 
-    drecords = {}
+    temp_cache = []
     for d in dlist:
-        if d['kismet.device.base.macaddr'] not in drecords:
-            drecords[d['kismet.device.base.macaddr']] = {
-                'mac': d['kismet.device.base.macaddr'],
-                'name': d["kismet.device.base.commonname"],
-                'manuf': d['kismet.device.base.manuf'],
-                'type': d['kismet.device.base.type'],
-                'signal': d['kismet.device.base.signal']['kismet.common.signal.max_signal'],
-                'time': d['kismet.device.base.last_time'] 
+        temp_cache.append({
+            'mac': d['kismet.device.base.macaddr'],
+            'name': d["kismet.device.base.commonname"],
+            'manuf': d['kismet.device.base.manuf'],
+            'type': d['kismet.device.base.type'],
+            'signal': d['kismet.device.base.signal']['kismet.common.signal.last_signal'],
+            'time': d['kismet.device.base.last_time']
             }
-            print('found new device {}'.format(drecords[d['kismet.device.base.macaddr']]))
-        else:
-            if not re.match(re_mac, d["kismet.device.base.commonname"]):
-                print('found new device name  {}: {} -> {}'.format.(drecords[drecords[d['kismet.device.base.macaddr']], d['kismet.device.base.macaddr']]['name'], d["kismet.device.base.commonname"]))
-                drecords[d['kismet.device.base.macaddr']]['name'] = d["kismet.device.base.commonname"]
-            if d['kismet.device.base.signal']['kismet.common.signal.max_signal'] < drecords[d['kismet.device.base.macaddr']]['signal']:
-                print('found device better signal {}: {} -> {}'.format(d['kismet.device.base.macaddr'], drecords[d['kismet.device.base.macaddr']]['signal'], d['kismet.device.base.signal']['kismet.common.signal.max_signal']))
-                drecords[d['kismet.device.base.macaddr']]['signal'] = d['kismet.device.base.signal']['kismet.common.signal.max_signal']
-                drecords[d['kismet.device.base.macaddr']]['time'] = d['kismet.device.base.last_time'] 
+        )
+        #print('found new device {}'.format(drecords[d['kismet.device.base.macaddr']]))
+    print('generate  device records: {}'.format(len(drecords)))
+    upload_cache.put(temp_cache)
 
-    t = threading.Thread(target=upload, args=(drecords,))
+#upload to data center
+@tl.job(interval=timedelta(seconds=config.upload__time_interval))
+def upload():
+    records = []
+    while not upload_cache.empty():
+        records += upload_cache.get()
+        upload_cache.task_done()
+
+    print('consume device records: {}'.format(len(records)))
+    t = threading.Thread(target=upload, args=(records,))
     t.start()
 
 def upload(devices):
     # data to be sent to api
-    data = {'data':devices}
+    #data = {'data':devices}
+    data = devices
     # sending post request and saving response as response object
     try:
-        r = requests.post(url = config.upload_endpoint, data = data)
-        print('upload {} devices'.format(len(devices))
+        #r = requests.post(url = config.upload_endpoint, data = data)
+        print('upload {} devices'.format(len(devices)))
     except requests.exceptions.HTTPError as errh:
         print ("Http Error:",errh, "\n on devices: \n", devices)
     except requests.exceptions.ConnectionError as errc:
@@ -91,6 +103,8 @@ def upload(devices):
     except requests.exceptions.RequestException as err:
         print ("OOps: Something Else",err, "\n on devices: \n", devices)
 
+
+tl.start(block=True)
 
 #kr.smart_device_list(ts=1, callback=per_device)
 #kr.smart_device_list(fields=fields, callback=per_device)

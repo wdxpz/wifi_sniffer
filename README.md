@@ -56,13 +56,25 @@ $ sudo rm -rfv /usr/local/bin/kismet* /usr/local/share/kismet* /usr/local/etc/ki
 ```
 
 ###Config Kismet
-## Register user accout and password at the 1st time access to kismet web `http://localhost:2501`
+#path of config files
+1. when compiling from source
+```
+/usr/local/etc/
+``
+2. when installing from the Kismet packages
+```
+/etc/kismet/
+```
+
+# Register user accout and password at the 1st time access to kismet web `http://localhost:2501`
 1. we set default user:pass as **kismet:kismet**
 2. files `kismet_httpd.conf` and `session.db` will be generated at directory `~/.kismet`, the content of `kismet_httpd.con' will be like:
 ```
 httpd_password=kismet
 httpd_username=kismet
 ```
+# clear old device data
+there is a config parameter `persistent_timeout` in configure file `kismet_storage.conf` to drop old data, its defualt value is 86400(one day) 
 
 ## Start as a service
 1. Kismet can also be started as a service; typically in this usage you should also pass --no-ncurses to prevent the ncurses wrapper from loading
