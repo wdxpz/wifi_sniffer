@@ -5,12 +5,13 @@ import re
 import requests
 import threading
 from queue import Queue
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 import kismet_rest as KismetRest
 from timeloop import Timeloop
 
 import config
+from tsdb import DBHelper
 
 re_mac = '([0-9a-fA-F:?]{17})'
 
@@ -39,6 +40,7 @@ upload_cache = Queue(maxsize=0)
 write_cach_sigal = singal = threading.Event()
 
 kr = KismetRest.KismetConnector(config.uri, username=config.user, password=config.password)
+dbtool = DBHelper()
 
 #wait for kismet service
 while True:
@@ -66,7 +68,7 @@ def collect_kismet():
             'manuf': d['kismet.device.base.manuf'],
             'type': d['kismet.device.base.type'],
             'signal': d['kismet.device.base.signal']['kismet.common.signal.last_signal'],
-            'time': d['kismet.device.base.last_time']
+            'time': datetime.fromtimestamp(d['kismet.device.base.last_time']).utcnow().isoformat("T")
             }
         )
         print('found new device {}'.format(temp_cache[len(temp_cache)-1]))
@@ -93,17 +95,10 @@ def upload(devices):
     data = devices
     # sending post request and saving response as response object
     try:
-        #r = requests.post(url = config.upload_endpoint, data = data)
+        dbtool.upload(data)
         print('upload {} devices'.format(len(devices)))
-    except requests.exceptions.HTTPError as errh:
-        print ("Http Error:",errh, "\n on devices: \n", devices)
-    except requests.exceptions.ConnectionError as errc:
-        print ("Error Connecting:",errc, "\n on devices: \n", devices)
-    except requests.exceptions.Timeout as errt:
-        print ("Timeout Error:",errt, "\n on devices: \n", devices)
-    except requests.exceptions.RequestException as err:
-        print ("OOps: Something Else",err, "\n on devices: \n", devices)
-
+    except Exception as err:
+        print ("Error: ",err, "\n on devices: \n", devices)
 
 tl.start(block=True)
 
