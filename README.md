@@ -116,3 +116,7 @@ refer: [https://medium.com/greedygame-engineering/an-elegant-way-to-run-periodic
 ```
 pip install timeloop
 ```
+3. influxdb for python3
+```
+sudo apt-get install python3-influxdb
+```
