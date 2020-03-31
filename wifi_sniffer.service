@@ -1,12 +1,11 @@
 [Unit]
 Description=Wifi Sniffer Service 
-After=multi-user.target
 
 [Service]
 Type=idle
 User=pi
-ExecStart=/usr/bin/python3 /home/pi/projects/wifi_sniffer/sniffer.py > /home/pi/projects/wifi_sniffer.log 2>&1
-Restart=always
+Group=pi
+ExecStart=/usr/bin/python3 /home/pi/projects/wifi_sniffer/sniffer.py
 
 [Install] 
 WantedBy=multi-user.target

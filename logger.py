@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 
 # Create handlers
 c_handler = logging.StreamHandler()
-f_handler = logging.FileHandler('wifi_sniffer.log')
+f_handler = logging.FileHandler('/home/pi/projects/wifi_sniffer/wifi_sniffer.log')
 c_handler.setLevel(logging.INFO)
 f_handler.setLevel(logging.INFO)
 
