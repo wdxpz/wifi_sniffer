@@ -12,6 +12,7 @@ from timeloop import Timeloop
 
 import config
 from tsdb import DBHelper
+from logger import logger
 
 re_mac = '([0-9a-fA-F:?]{17})'
 
@@ -46,10 +47,10 @@ dbtool = DBHelper()
 while True:
     try:
         status = kr.system_status()
-        print('found Kismet online!')
+        logger.debug('found Kismet online!')
         break;
     except e:
-        print('waiting Kismet online ....', end='\r')
+        logger.debug('waiting Kismet online ....', end='\r')
         time.sleep(1)
 
 tl = Timeloop()
@@ -58,7 +59,7 @@ tl = Timeloop()
 @tl.job(interval=timedelta(seconds=config.collect_time_interval))
 def collect_kismet():
     dlist = kr.smart_device_list(ts=time.time()-config.collect_time_interval)
-    #print('found original device records: {}'.format(len(dlist)))
+    #logger.info('found original device records: {}'.format(len(dlist)))
 
     temp_cache = []
     for d in dlist:
@@ -71,8 +72,8 @@ def collect_kismet():
             'time': datetime.fromtimestamp(d['kismet.device.base.last_time']).utcnow().isoformat("T")
             }
         )
-        print('found new device {}'.format(temp_cache[len(temp_cache)-1]))
-    print('generate  device records: {}'.format(len(temp_cache)))
+        logger.info('found new device {}'.format(temp_cache[len(temp_cache)-1]))
+    logger.info('generate  device records: {}'.format(len(temp_cache)))
     upload_cache.put(temp_cache)
 
 #upload to data center
@@ -83,7 +84,7 @@ def upload2datacenter():
         records += upload_cache.get()
         upload_cache.task_done()
 
-    print('consume device records: {}'.format(len(records)))
+    logger.info('consume device records: {}'.format(len(records)))
     if len(records) == 0:
         return
     t = threading.Thread(target=upload, args=(records,))
@@ -96,9 +97,9 @@ def upload(devices):
     # sending post request and saving response as response object
     try:
         dbtool.upload(data)
-        print('upload {} devices'.format(len(devices)))
+        logger.info('upload {} devices'.format(len(devices)))
     except Exception as err:
-        print ("Error: ",err, "\n on devices: \n", devices)
+        logger.info("Error: ",err, "\n on devices: \n", devices)
 
 tl.start(block=True)
 

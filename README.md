@@ -120,3 +120,35 @@ pip install timeloop
 ```
 sudo apt-get install python3-influxdb
 ```
+
+
+# make the sniffer.py as service
+## nano wifi_sniffer.servcie
+```
+[Unit]
+Description=Wifi Sniffer Service
+After=multi-user.target
+
+[Service]
+Type=idle
+User=pi
+ExecStart=/usr/bin/python3 /home/pi/projects/wifi_sniffer/sniffer.py > /home/pi/projects/wifi_sniffer.log 2>&1
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+** key: need to add 'User=pi', otherwise, the module Kismest_rest will not be loaded **
+
+
+## Steps to start service
+
+```
+$ cd project_dir
+$ sudo cp wifi_sniffer.service /lib/systemd/system/wifi_sniffer.service
+$ sudo chmod 644 /lib/systemd/system/wifi_sniffer.service
+$ sudo systemctl daemon-reload
+$ sudo systemctl enable wifi_sniffer.service
+$ sudo systemctl start wifi_sniffer.service
+```
