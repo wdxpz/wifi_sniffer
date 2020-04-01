@@ -1,3 +1,5 @@
+robot_id = 'tb3_0'
+
 uri = "http://localhost:2501"
 user = 'kismet'
 password = 'kismet'
