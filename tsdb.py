@@ -3,6 +3,9 @@ import datetime
 from influxdb import InfluxDBClient
 
 import config
+from logger import getLogger
+logger = getLogger('tsdb')
+logger.propagate = False
 
 body_wifi = {
     'measurement': config.upload_table,
@@ -46,7 +49,7 @@ class DBHelper():
         try:
             self.client.write_points(records)
         except Exception as e:
-            print('DB operation: write robot position record error!', e)
+            logger.info('DB operation: write robot position record error! ' + str(e))
     
     def emptyWifiRecords(self):
         self.client.query("delete from {};".format(config.upload_table))
@@ -57,8 +60,11 @@ class DBHelper():
         return resutls
 
     def upload(self, wifi_records):
-        self.writeWifiRecords(wifi_records)
-        print('DBHelper: sent {} wifi records'.format(len(wifi_records)))
+        try:
+            self.writeWifiRecords(wifi_records)
+            logger.info('DBHelper: sent {} wifi records'.format(len(wifi_records)))
+        except Exception as err:
+            logger.info("Error: {}, during influx upload on devices: {}\n".format(err, wifi_records))
 
 if __name__ == '__main__':
     dbtool = DBHelper()

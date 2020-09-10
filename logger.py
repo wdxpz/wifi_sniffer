@@ -1,21 +1,28 @@
 import logging
 
-# Create a custom logger
-logger = logging.getLogger(__name__)
+from config import log_file
 
-# Create handlers
-c_handler = logging.StreamHandler()
-f_handler = logging.FileHandler('/home/pi/projects/wifi_sniffer/wifi_sniffer.log')
-c_handler.setLevel(logging.INFO)
-f_handler.setLevel(logging.INFO)
+def getLogger(name=None):
 
-# Create formatters and add it to handlers
-c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
-f_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-c_handler.setFormatter(c_format)
-f_handler.setFormatter(f_format)
+    # Create a custom logger
+    #logger = logging.getLogger(__name__)
+    logger = logging.getLogger(name)
 
-# Add handlers to the logger
-logger.addHandler(c_handler)
-logger.addHandler(f_handler)
-logger.setLevel(logging.INFO)
+    # Create handlers
+    c_handler = logging.StreamHandler()
+    f_handler = logging.FileHandler(log_file)
+    c_handler.setLevel(logging.INFO)
+    f_handler.setLevel(logging.INFO)
+
+    # Create formatters and add it to handlers
+    c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+    f_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    c_handler.setFormatter(c_format)
+    f_handler.setFormatter(f_format)
+
+    # Add handlers to the logger
+    logger.addHandler(c_handler)
+    logger.addHandler(f_handler)
+    logger.setLevel(logging.INFO)
+
+    return logger

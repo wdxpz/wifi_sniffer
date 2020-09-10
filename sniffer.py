@@ -8,11 +8,13 @@ from queue import Queue
 from datetime import timedelta, datetime
 
 import kismet_rest as KismetRest
-from timeloop import Timeloop
 
 import config
+from kafaka import sendMsg
 from tsdb import DBHelper
-from logger import logger
+from logger import getLogger
+logger = getLogger('Wifi Sniffer')
+logger.propagate = False
 
 re_mac = '([0-9a-fA-F:?]{17})'
 
@@ -41,54 +43,73 @@ upload_cache = Queue(maxsize=0)
 write_cach_sigal = singal = threading.Event()
 
 kr = KismetRest.KismetConnector(config.uri, username=config.user, password=config.password)
-dbtool = DBHelper()
+dbtool = DBHelper() if config.Enable_TSDB else None
+last_collect_time = None
 
-#wait for kismet service
-while True:
-    try:
-        status = kr.system_status()
-        logger.debug('found Kismet online!')
-        break;
-    except e:
-        logger.debug('waiting Kismet online ....', end='\r')
-        time.sleep(1)
+#TODO: need redis uri
+r = redis.Redis()
 
-tl = Timeloop()
+def getLocation():
+    if r is None:
+        msg = "exit because Redis connection is failed!"
+        logger.error(msg)
+        raise Exception(msg)
+    location = r.get(config.robot_id)
 
-#collect devices from kismet very config.collect_time_interval seconds 
-@tl.job(interval=timedelta(seconds=config.collect_time_interval))
+    return location
+
+#collect devices from kismet very config.collect_time_mini_interval seconds 
 def collect_kismet():
-    dlist = kr.smart_device_list(ts=time.time()-config.collect_time_interval)
-    #logger.info('found original device records: {}'.format(len(dlist)))
+    while True:
+        cur_time = time.time()
+        if last_collect_time is None:
+            last_collect_time = cur_time-config.collect_time_mini_interval
 
-    temp_cache = []
-    for d in dlist:
-        temp_cache.append({
-            'mac': d['kismet.device.base.macaddr'],
-            'name': d["kismet.device.base.commonname"],
-            'manuf': d['kismet.device.base.manuf'],
-            'type': d['kismet.device.base.type'],
-            'signal': d['kismet.device.base.signal']['kismet.common.signal.last_signal'],
-            'time': datetime.fromtimestamp(d['kismet.device.base.last_time']).utcnow().isoformat("T")
-            }
-        )
-        logger.info('found new device {}'.format(temp_cache[len(temp_cache)-1]))
-    logger.info('generate  device records: {}'.format(len(temp_cache)))
-    upload_cache.put(temp_cache)
+        dlist = kr.smart_device_list(ts=last_collect_time)
+        #logger.info('found original device records: {}'.format(len(dlist)))
+
+        last_collect_time = cur_time
+
+        location = getLocation()
+
+        temp_cache = []
+        for d in dlist:
+            temp_cache.append({
+                'mac': d['kismet.device.base.macaddr'],
+                'name': d["kismet.device.base.commonname"],
+                'manuf': d['kismet.device.base.manuf'],
+                'type': d['kismet.device.base.type'],
+                'signal': d['kismet.device.base.signal']['kismet.common.signal.last_signal'],
+                'time': datetime.fromtimestamp(d['kismet.device.base.last_time']).utcnow().isoformat("T"),
+                'location': location
+                }
+            )
+            logger.info('found new device {}'.format(temp_cache[len(temp_cache)-1]))
+        logger.info('generate device records: {}'.format(len(temp_cache)))
+        upload_cache.put(temp_cache)
+
+        time.sleep(config.collect_time_mini_interval)
 
 #upload to data center
-@tl.job(interval=timedelta(seconds=config.upload_time_interval))
 def upload2datacenter():
-    records = []
-    while not upload_cache.empty():
-        records += upload_cache.get()
-        upload_cache.task_done()
+    while True:
+        records = []
+        while not upload_cache.empty():
+            records += upload_cache.get()
+            upload_cache.task_done()
 
-    logger.info('consume device records: {}'.format(len(records)))
-    if len(records) == 0:
-        return
-    t = threading.Thread(target=upload, args=(records,))
-    t.start()
+        logger.info('consume device records: {}'.format(len(records)))
+        if len(records) == 0:
+            return
+
+        t = threading.Thread(target=sendMsg, args=(records,))
+        t.start()
+
+        if dbtool:
+            t = threading.Thread(target=dbtool.upload, args=(records,))
+            t.start()
+
+        time.sleep(config.upload_time_mini_interval)
 
 def upload(devices):
     # data to be sent to api
@@ -96,13 +117,21 @@ def upload(devices):
     data = devices
     # sending post request and saving response as response object
     try:
-        dbtool.upload(data)
-        logger.info('upload {} devices'.format(len(devices)))
+        if dbtool:
+            dbtool.upload(data)
+            logger.info('upload influx {} devices'.format(len(devices)))
+        
     except Exception as err:
-        logger.info("Error: ",err, "\n on devices: \n", devices)
+        logger.info("Error: {}, during upload on devices: {}\n".format(err, devices))
 
-tl.start(block=True)
 
-#kr.smart_device_list(ts=1, callback=per_device)
-#kr.smart_device_list(fields=fields, callback=per_device)
- 
+if __name__ == 'main':
+    #wait for kismet service
+    while True:
+        try:
+            status = kr.system_status()
+            logger.info('found Kismet online!')
+            break;
+        except e:
+            logger.debug('waiting Kismet online ....\n')
+            time.sleep(1)

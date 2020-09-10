@@ -71,7 +71,8 @@ $ sudo rm -rfv /usr/local/bin/kismet* /usr/local/share/kismet* /usr/local/etc/ki
 
 ```
 /usr/local/etc/
-``
+```
+
 2. when installing from the Kismet packages
 
 ```
@@ -79,13 +80,14 @@ $ sudo rm -rfv /usr/local/bin/kismet* /usr/local/share/kismet* /usr/local/etc/ki
 ```
 
 ### Register user accout and password at the 1st time access to kismet web `http://localhost:2501`
-1. we set default user:pass as **kismet:kismet**
-2. files `kismet_httpd.conf` and `session.db` will be generated at directory `~/.kismet`, the content of `kismet_httpd.con' will be like:
+* we set default user:pass as **kismet:kismet**
+* files `kismet_httpd.conf` and `session.db` will be generated at directory `~/.kismet`, the content of `kismet_httpd.con' will be like:
 
 ```
 httpd_password=kismet
 httpd_username=kismet
 ```
+
 ### clear old device data
 there is a config parameter `persistent_timeout` in configure file `kismet_storage.conf` to drop old data, its defualt value is 86400(one day) 
 
@@ -127,14 +129,20 @@ $ cd python-kismet-rest && pip install .
 
 2. timeloop
 refer: [https://medium.com/greedygame-engineering/an-elegant-way-to-run-periodic-tasks-in-python-61b7c477b679](An elegant way to run periodic tasks in python), [https://github.com/sankalpjonn/timeloop](github)
+
 ```
 pip install timeloop
 ```
+
 3. influxdb for python3
 ```
 sudo apt-get install python3-influxdb
 ```
-
+4. kafuka and redis
+```
+pip install kafka-python==2.0.1
+pip install redis
+```
 
 # make the sniffer.py as service
 ## nano wifi_sniffer.servcie
