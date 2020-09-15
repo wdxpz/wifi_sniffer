@@ -19,7 +19,7 @@ upload_table = 'wifi_sniffer'
 #kafaka
 topic = "wifi_sniffer"
 brokers = ["192.168.12.146:9092"] # current internal brokers(actually 3 brokers behind)
-
+block_waiting_time = 1
 #redis
 
 #log file

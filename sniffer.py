@@ -59,18 +59,28 @@ def getLocation():
     return location
 
 #collect devices from kismet very config.collect_time_mini_interval seconds 
-def collect_kismet():
+def collect_kismet(interval):
     while True:
+
+        time.sleep(interval)
+
         cur_time = time.time()
         if last_collect_time is None:
-            last_collect_time = cur_time-config.collect_time_mini_interval
+            last_collect_time = cur_time-interval
 
-        dlist = kr.smart_device_list(ts=last_collect_time)
-        #logger.info('found original device records: {}'.format(len(dlist)))
+        try:
+            dlist = kr.smart_device_list(ts=last_collect_time)
+            #logger.info('found original device records: {}'.format(len(dlist)))
+        except Exception as e:
+            logger.error("read kismit db error! " + str(e))
+            last_collect_time = cur_time
+            continue
 
         last_collect_time = cur_time
 
         location = getLocation()
+        if location is None or len(location)<2:
+            continue
 
         temp_cache = []
         for d in dlist:
@@ -88,11 +98,11 @@ def collect_kismet():
         logger.info('generate device records: {}'.format(len(temp_cache)))
         upload_cache.put(temp_cache)
 
-        time.sleep(config.collect_time_mini_interval)
-
 #upload to data center
-def upload2datacenter():
+def upload2datacenter(interval):
     while True:
+        time.sleep(interval)
+
         records = []
         while not upload_cache.empty():
             records += upload_cache.get()
@@ -100,7 +110,7 @@ def upload2datacenter():
 
         logger.info('consume device records: {}'.format(len(records)))
         if len(records) == 0:
-            return
+            continue
 
         t = threading.Thread(target=sendMsg, args=(records,))
         t.start()
@@ -109,7 +119,6 @@ def upload2datacenter():
             t = threading.Thread(target=dbtool.upload, args=(records,))
             t.start()
 
-        time.sleep(config.upload_time_mini_interval)
 
 def upload(devices):
     # data to be sent to api
@@ -135,3 +144,11 @@ if __name__ == 'main':
         except e:
             logger.debug('waiting Kismet online ....\n')
             time.sleep(1)
+
+    collect_t = threading.Thread(name='{}_collect_wifi_task'.format(config.robot_id), target=collect_kismet, args=(config.collect_time_mini_interval,))
+    collect_t.setDaemon(True)
+    collect_t.start()
+
+    upload_t = threading.Thread(name='{}_upload_wifi_task'.format(config.robot_id), target=upload2datacenter, args=(config.upload_time_mini_interval,))
+    upload_t.setDaemon(True)
+    upload_t.start()
