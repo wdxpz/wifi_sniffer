@@ -7,12 +7,14 @@ import threading
 from queue import Queue
 from datetime import timedelta, datetime
 
+import redis
 import kismet_rest as KismetRest
 
 import config
 from kafaka import sendMsg
 from tsdb import DBHelper
 from logger import getLogger
+
 logger = getLogger('Wifi Sniffer')
 logger.propagate = False
 
@@ -26,6 +28,8 @@ fields = [
     "kismet.device.base.last_time",
     "kismet.device.base.signal"
 ]
+
+redis_connector = redis.Redis(host=config.redis_host, port=config.redis_port, db=0)
 
 def per_device(d):
     for k in d.keys():
@@ -46,15 +50,9 @@ kr = KismetRest.KismetConnector(config.uri, username=config.user, password=confi
 dbtool = DBHelper() if config.Enable_TSDB else None
 last_collect_time = None
 
-#TODO: need redis uri
-r = redis.Redis()
-
 def getLocation():
-    if r is None:
-        msg = "exit because Redis connection is failed!"
-        logger.error(msg)
-        raise Exception(msg)
-    location = r.get(config.robot_id)
+    res = r.get(config.robot_id)
+    location = res.get('location', None)
 
     return location
 
