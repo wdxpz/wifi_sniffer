@@ -26,7 +26,7 @@ def sendMsg(data):
     for record in data:
         body = copy.deepcopy(payload)
         body['timestamp'] = record['time']
-        body['locatoin'] = record['location']
+        body['location'] = record['location']
         body['mac'] = record['mac']
         body['name'] = record['name']
         body['manuf'] = record['manuf']
