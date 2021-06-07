@@ -88,6 +88,9 @@ def collect_kismet(interval):
 
         temp_cache = []
         for d in dlist:
+            if 'kismet.device.base.signal' not in d.keys():
+                logger.info("device without signal value, ingnore!")
+                continue
             temp_cache.append({
                 'mac': d['kismet.device.base.macaddr'],
                 'name': d["kismet.device.base.commonname"],
