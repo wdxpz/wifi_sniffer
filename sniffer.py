@@ -52,9 +52,11 @@ last_collect_time = None
 
 def getLocation():
     res = redis_connector.hgetall(config.robot_id)
+    logger.info('redis return {}'.format(res))
     if res is None or 'location'.encode() not in res.keys():
         return None
 
+    logger.info('location: {}'.format(res['location'.encode()].decode()))
     return res['location'.encode()].decode()
 
 #collect devices from kismet very config.collect_time_mini_interval seconds 
@@ -92,7 +94,7 @@ def collect_kismet(interval):
                 'manuf': d['kismet.device.base.manuf'],
                 'type': d['kismet.device.base.type'],
                 'signal': d['kismet.device.base.signal']['kismet.common.signal.last_signal'],
-                'time': datetime.fromtimestamp(d['kismet.device.base.last_time']).utcnow().isoformat("T"),
+                'time': d['kismet.device.base.last_time'], #datetime.fromtimestamp(d['kismet.device.base.last_time']).utcnow().isoformat("T"),
                 'location': location
                 }
             )
