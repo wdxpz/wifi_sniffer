@@ -26,4 +26,4 @@ redis_host = "192.168.12.146"
 redis_port = "6379"
 
 #log file
-log_file = '/home/pi/projects/wifi_sniffer/wifi_sniffer.log'
+log_file = '/home/husarion/sniffer_wifi/wifi_sniffer.log'

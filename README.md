@@ -37,7 +37,7 @@ $ cd /kismet
 $ ./configure
 $ make -j4
 ```
-
+** if anything wrong with libwebsockets**, please refer to [kismet on raspberry pi failed ./configure libwebsockets](https://stackoverflow.com/questions/64759406/kismet-on-raspberry-pi-failed-configure-libwebsockets)
 4. install
 
 ```

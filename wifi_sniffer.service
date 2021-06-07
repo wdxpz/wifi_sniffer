@@ -3,9 +3,9 @@ Description=Wifi Sniffer Service
 
 [Service]
 Type=idle
-User=pi
-Group=pi
-ExecStart=/usr/bin/python3 /home/pi/projects/wifi_sniffer/sniffer.py
+User=husarion
+Group=husarion
+ExecStart=/usr/bin/python3 /home/husarion/sniffer_wifi/sniffer.py
 
 [Install] 
 WantedBy=multi-user.target
