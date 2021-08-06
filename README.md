@@ -114,6 +114,63 @@ source=[interface]:[option, option, option]
 
 2. kismet defaultly supports wifi channel hopping, and you can even set the hopping time 'channel_hop_speed=channels/sec | channels/min' and split popping `split_source_hopping=true` for multi wifi interface, see [https://www.kismetwireless.net/docs/readme/datasources/]()
 
+# Install Kismet with support of Ubertooth
+## Install build tools and dependencies
+**note: no need to install libbtbb-dev, we will build it from source latter**
+```
+sudo apt-get -y update
+sudo apt install build-essential git libwebsockets-dev pkg-config zlib1g-dev libnl-3-dev libnl-genl-3-dev libcap-dev libpcap-dev libnm-dev libdw-dev libsqlite3-dev libprotobuf-dev libprotobuf-c-dev protobuf-compiler protobuf-c-compiler libsensors4-dev libusb-1.0-0-dev python3 python3-setuptools python3-protobuf python3-requests python3-numpy python3-serial python3-usb python3-dev python3-websockets librtlsdr0 
+```
+
+## Get and build libbtbb
+```
+cd ~
+wget https://github.com/greatscottgadgets/libbtbb/archive/2020-12-R1.tar.gz -O libbtbb-2020-12-R1.tar.gz
+tar xf libbtbb-2020-12-R1.tar.gz
+cd libbtbb-2020-12-R1
+mkdir build
+cd build
+cmake ..
+make
+sudo make install
+sudo ldconfig
+```
+## Get and build Ubertooth tools
+```
+cd ~
+wget https://github.com/greatscottgadgets/ubertooth/releases/download/2020-12-R1/ubertooth-2015-10-R1.tar.xz -O ubertooth-2020-12-R1.tar.xz
+tar xf ubertooth-2020-12-R1.tar.xz
+cd ubertooth-2020-12-R1/host
+mkdir build
+cd build
+cmake ..
+make
+sudo make install
+sudo ldconfig
+```
+
+## get and build Kismet with ubertooth from source
+### build kismet from source, refer the first section to install the dependencies
+[refer](https://kismetwireless.net/docs/readme/quickstart/#compiling-quick-setup)
+**check if Ubertooth One: yes after ./configure**
+
+### Get and build Kismet and Ubertooth plugin
+```
+cd ~
+wget http://www.kismetwireless.net/code/kismet-2016-01-R1.tar.xz
+tar xf kismet-2016-01-R1.tar.xz
+cd kismet-2016-01-R1
+ln -s ../ubertooth-2015-10-R1/host/kismet/plugin-ubertooth ./
+./configure
+make deb
+make && make plugins
+make suidinstall
+make plugins-install
+
+#Set writeinterval
+sed -i "s/writeinterval=300/writeinterval=10/g" /usr/local/etc/kismet.conf
+```
+
 # Development
 ## Environment
 1. kismet_rest 
