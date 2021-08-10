@@ -117,9 +117,15 @@ source=[interface]:[option, option, option]
 # Install Kismet with support of Ubertooth
 ## Install build tools and dependencies
 **note: no need to install libbtbb-dev, we will build it from source latter**
+
 ```
 sudo apt-get -y update
 sudo apt install build-essential git libwebsockets-dev pkg-config zlib1g-dev libnl-3-dev libnl-genl-3-dev libcap-dev libpcap-dev libnm-dev libdw-dev libsqlite3-dev libprotobuf-dev libprotobuf-c-dev protobuf-compiler protobuf-c-compiler libsensors4-dev libusb-1.0-0-dev python3 python3-setuptools python3-protobuf python3-requests python3-numpy python3-serial python3-usb python3-dev python3-websockets librtlsdr0 
+```
+
+** if python3-protobuf failed, try: **
+```
+pip3 install python3-protobuf
 ```
 
 ## Get and build libbtbb
