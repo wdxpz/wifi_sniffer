@@ -63,7 +63,13 @@ sudo apt remove kismet kismet-plugins
 ```
 $ sudo rm -rfv /usr/local/bin/kismet* /usr/local/share/kismet* /usr/local/etc/kismet*
 ```
-
+## Zigbee support by Kismet 2022-02-R1
+```
+TI CC 2531 Zigbee: yes
+NRF52840 Zigbee: yes
+NXP KW41Z BLE/Zigbee: yes
+Freaklabs Zigbee: yes
+```
 ## Config Kismet
 ### path of config files
 
