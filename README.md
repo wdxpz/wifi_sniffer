@@ -21,7 +21,7 @@ deb http://mirror.tuna.tsinghua.edu.cn/raspberrypi/ stretch main ui
 deb-src http://mirror.tuna.tsinghua.edu.cn/raspberrypi/ stretch main ui
 ```
 
-## Build
+## Option1: Install by build from source
 1. audo apt-get update
 
 2. install needed packages
@@ -51,6 +51,19 @@ $ sudo usermod -aG kismet $USER
 #logout, and login, check
 $groups
 ```
+## Option2: install from package
+refer to [office install pakcage](https://www.kismetwireless.net/docs/readme/packages/), for **ubuntu 18.04**
+```
+$ wget -O - https://www.kismetwireless.net/repos/kismet-release.gpg.key | sudo apt-key add -
+$ echo 'deb https://www.kismetwireless.net/repos/apt/release/bionic bionic main' | sudo tee /etc/apt/sources.list.d/kismet.list
+$ sudo apt update
+$ sudo apt install kismet
+
+$ sudo usermod -aG kismet $USER
+
+```
+**remember, it's very important to add Kismet group by `sudo usermod -aG kismet $USER`, otherwise it will have not privelidge to call some package**
+
 ## Remove Kismet
 1. if you installed from a Kismet package in your distribution:
 
