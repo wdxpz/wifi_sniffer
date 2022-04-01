@@ -121,6 +121,23 @@ there is a config parameter `persistent_timeout` in configure file `kismet_stora
 User=your-unprivileged-user
 Group=kismet
 ```
+for **rosbot 2.0 pro**, it will be:
+```
+[Service]
+User=husarion
+Group=kismet
+```
+
+**Be sure to put a log_prefix=... in `/usr/local/etc/kismet_site.conf`**, Because when using systemd (or any other startup script system), you will need to be sure to configure Kismet to log to a valid location. By default, Kismet logs to the directory it is launched from, which is unlikely to be valid when starting from a boot script.
+```
+sudo nano /usr/local/etc/kismet_site.conf
+
+#and put in follwing scritps and save:
+
+log_prefix=/home/husarion/logs
+
+```
+
 4. **remeber** to `sudo systemctl enable kismet`
 
 ## Datasource and channel hopping
