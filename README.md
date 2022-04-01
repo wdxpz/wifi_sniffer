@@ -113,7 +113,7 @@ there is a config parameter `persistent_timeout` in configure file `kismet_stora
 
 ## Start as a service
 1. Kismet can also be started as a service; typically in this usage you should also pass --no-ncurses to prevent the ncurses wrapper from loading
-2. An example systemd script is in the packaging/systemd/ directory of the Kismet source; if you are installing from source this can be copied to /etc/systemd/system/kismet.service, and packages should automatically include this file.
+2. An example systemd script is in the `kismet_src_dir/packaging/systemd/` directory of the Kismet source; if you are installing from source this can be copied to '/etc/systemd/system/kismet.service', and packages should automatically include this file.
 3. When starting Kismet via systemd, you should install kismet as suidroot, and use systemctl edit kismet.service to set the following:
 
 ```
