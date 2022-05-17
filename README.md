@@ -1,4 +1,4 @@
-]# Install Kismet
+# Install Kismet
 ## Qinghua Source
 1. /etc/apt/sources.list
 ```
@@ -21,13 +21,14 @@ deb http://mirror.tuna.tsinghua.edu.cn/raspberrypi/ stretch main ui
 deb-src http://mirror.tuna.tsinghua.edu.cn/raspberrypi/ stretch main ui
 ```
 
-## Build
+## Option1: Install by build from source
 1. audo apt-get update
 
 2. install needed packages
 
 ```
-$ sudo apt install build-essential git libmicrohttpd-dev pkg-config zlib1g-dev libnl-3-dev libnl-genl-3-dev libcap-dev libpcap-dev libnm-dev libdw-dev libsqlite3-dev libprotobuf-dev libprotobuf-c-dev protobuf-compiler protobuf-c-compiler libsensors4-dev libusb-1.0.0-dev python3 python3-setuptools python3-protobuf python3-requests python3-numpy python3-serial python3-usb python3-dev librtlsdr0 libubertooth-dev libbtbb-dev 
+$ sudo apt install build-essential git libwebsockets-dev pkg-config zlib1g-dev libnl-3-dev libnl-genl-3-dev libcap-dev libpcap-dev libnm-dev libdw-dev libsqlite3-dev libprotobuf-dev libprotobuf-c-dev protobuf-compiler protobuf-c-compiler libsensors4-dev libusb-1.0-0-dev python3 python3-setuptools python3-protobuf python3-requests python3-numpy python3-serial python3-usb python3-dev python3-websockets librtlsdr0 libubertooth-dev libbtbb-dev
+
 ```
 
 3. build
@@ -51,6 +52,19 @@ $ sudo usermod -aG kismet $USER
 #logout, and login, check
 $groups
 ```
+## Option2: install from package
+refer to [office install pakcage](https://www.kismetwireless.net/docs/readme/packages/), for **ubuntu 18.04**
+```
+$ wget -O - https://www.kismetwireless.net/repos/kismet-release.gpg.key | sudo apt-key add -
+$ echo 'deb https://www.kismetwireless.net/repos/apt/release/bionic bionic main' | sudo tee /etc/apt/sources.list.d/kismet.list
+$ sudo apt update
+$ sudo apt install kismet
+
+$ sudo usermod -aG kismet $USER
+
+```
+**remember, it's very important to add Kismet group by `sudo usermod -aG kismet $USER`, otherwise it will have not privelidge to call some package**
+
 ## Remove Kismet
 1. if you installed from a Kismet package in your distribution:
 
@@ -64,6 +78,13 @@ sudo apt remove kismet kismet-plugins
 $ sudo rm -rfv /usr/local/bin/kismet* /usr/local/share/kismet* /usr/local/etc/kismet*
 ```
 
+## Zigbee support by Kismet 2022-02-R1
+```
+TI CC 2531 Zigbee: yes
+NRF52840 Zigbee: yes
+NXP KW41Z BLE/Zigbee: yes
+Freaklabs Zigbee: yes
+```
 ## Config Kismet
 ### path of config files
 
@@ -93,7 +114,7 @@ there is a config parameter `persistent_timeout` in configure file `kismet_stora
 
 ## Start as a service
 1. Kismet can also be started as a service; typically in this usage you should also pass --no-ncurses to prevent the ncurses wrapper from loading
-2. An example systemd script is in the packaging/systemd/ directory of the Kismet source; if you are installing from source this can be copied to /etc/systemd/system/kismet.service, and packages should automatically include this file.
+2. An example systemd script is in the `kismet_src_dir/packaging/systemd/` directory of the Kismet source; if you are installing from source this can be copied to `/etc/systemd/system/kismet.service`, and packages should automatically include this file.
 3. When starting Kismet via systemd, you should install kismet as suidroot, and use systemctl edit kismet.service to set the following:
 
 ```
@@ -101,6 +122,23 @@ there is a config parameter `persistent_timeout` in configure file `kismet_stora
 User=your-unprivileged-user
 Group=kismet
 ```
+for **rosbot 2.0 pro**, it will be:
+```
+[Service]
+User=husarion
+Group=kismet
+```
+
+**Be sure to put a log_prefix=... in `/usr/local/etc/kismet_site.conf`**, Because when using systemd (or any other startup script system), you will need to be sure to configure Kismet to log to a valid location. By default, Kismet logs to the directory it is launched from, which is unlikely to be valid when starting from a boot script.
+```
+sudo nano /usr/local/etc/kismet_site.conf
+
+#and put in follwing scritps and save:
+
+log_prefix=/home/husarion/logs
+
+```
+
 4. **remeber** to `sudo systemctl enable kismet`
 
 ## Datasource and channel hopping
