@@ -1,0 +1,8 @@
+/kismet-2022-02-R1
+*.gz
+*.xz
+*.log
+*.zip
+/__pycache__
+/libwebsockets-3.2.3
+
